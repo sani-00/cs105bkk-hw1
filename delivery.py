@@ -7,7 +7,8 @@ class MenuItem:
 
     def __init__(self, name: str, price: int):
         """Store the name and the price. The price goes through the setter, so it is checked."""
-        raise NotImplementedError("core: store the name, and set the price through the setter")
+        self.name = name
+        self.price = price
 
     @property
     def price(self) -> int:
@@ -17,15 +18,19 @@ class MenuItem:
     @price.setter
     def price(self, value: int) -> None:
         """Set the price. Raise ValueError if it is 0 or less, and keep the old price."""
-        raise NotImplementedError("core: check the new price, then store it in self._price")
+        if value <= 0:
+           raise ValueError("ValueError: price must be more than 0 baht, got 0 ")
+        else:
+           self._price = value
 
     def __repr__(self) -> str:
         """Return the developer view, for example MenuItem('Pad Thai', 60)."""
-        raise NotImplementedError("core: return the developer view, ClassName('name', price)")
-
+        return f"{type(self).__name__}({self.name!r}, {self.price})"
+    
     def __eq__(self, other: object) -> bool:
         """Two menu items are equal when their names and prices are equal."""
-        raise NotImplementedError("core: compare name and price, or return NotImplemented")
+        return self.name == other.name and self.price == other.price
+        
 
     def cost(self, quantity: int) -> int:
         """Provided: what quantity of this dish costs, in baht."""
@@ -37,8 +42,7 @@ class PromoItem(MenuItem):
 
     def cost(self, quantity: int) -> int:
         """Return what quantity costs when every third one is free."""
-        raise NotImplementedError("core: work out the free ones, then ask super() for the cost")
-
+        return super().cost(quantity-(quantity // 3))
 
 class Order:
     """One customer's delivery order: a list of (menu item, quantity) lines."""
@@ -48,19 +52,32 @@ class Order:
 
     def __init__(self, customer: str, lines: list[tuple[MenuItem, int]] | None = None):
         """Store the customer and a new list of lines. Never share a list with the caller or another order."""
-        raise NotImplementedError("core: store the customer and your own new list of lines")
-
+        self.customer = customer
+        if lines == None:
+           self.lines = []
+        else:
+            self.lines = lines.copy()
+           
     def add(self, item: MenuItem, quantity: int = 1) -> None:
         """Add one line. Raise ValueError if quantity is less than 1."""
-        raise NotImplementedError("core: check the quantity, then add the line")
+        if quantity < 1:
+           raise ValueError ("quantity must be at least 1, got 0")
+        else:
+            self.lines.append((item,quantity))
 
     def total(self) -> int:
         """Return the food cost plus the delivery fee; free delivery from free_delivery_from; 0 if empty."""
-        raise NotImplementedError("core: ask each item for its cost, then add delivery")
+        delivery = 0
+        for item,quantity in self.lines:
+            delivery += item.cost(quantity)
+        if delivery >= self.free_delivery_from:
+            return delivery
+        else:
+            return self.delivery_fee + delivery
 
     def summary(self) -> list[str]:
         """Return one text line per order line, for example "2 x Pad Thai"."""
-        raise NotImplementedError("core: build the summary lines with a list comprehension")
+        return [f"{quantity} x {item.name}" for item , quantity in self.lines]
 
 
 def cheapest(options: list) -> object | None:
@@ -68,4 +85,11 @@ def cheapest(options: list) -> object | None:
 
     An option can be anything with a total() method, not only an Order.
     """
-    raise NotImplementedError("core: return the option whose total() is smallest")
+    cheapest_order = None
+
+    for order in options:
+        if cheapest_order is None:
+            cheapest_order = order
+        if order.total() <= cheapest_order.total():
+            cheapest_order = order   
+    return cheapest_order     
